@@ -151,11 +151,11 @@
     const rules = C.rulesText.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("");
 
     app.innerHTML = `
-      <nav class="teams">${nav}<a href="#rules">Rules</a></nav>
+      <nav class="teams">${nav}<a href="#rules">Keeper rules</a><a href="rules.html">Full league rules</a></nav>
       <section><h2>Standings</h2><div class="scroll"><table><thead><tr><th class="num">#</th><th>Manager</th><th>Team</th><th class="num">Record</th><th class="num">Points</th></tr></thead><tbody>${standings}</tbody></table></div></section>
       <section><h2>Recent moves</h2><ul class="moves">${recent || "<li class='muted'>No moves yet.</li>"}</ul></section>
       ${teamSections}
-      <section id="rules"><h2>Keeper rules</h2><p class="sub">Keeper costs show the round needed for each consecutive keep. "—" means the player can't be kept that year. Collisions (two keepers in one round) and traded-away picks can push a keeper to an earlier round; this page shows the base cost only.</p><table><tbody>${rules}</tbody></table></section>`;
+      <section id="rules"><h2>Keeper rules</h2><p><a href="rules.html">Read the full league rules &rarr;</a></p><p class="sub">Keeper costs show the round needed for each consecutive keep. "—" means the player can't be kept that year. Collisions (two keepers in one round) and traded-away picks can push a keeper to an earlier round; this page shows the base cost only.</p><table><tbody>${rules}</tbody></table></section>`;
     statusEl.textContent = `Live from Sleeper · updated ${new Date().toLocaleString()}`;
   }
 
