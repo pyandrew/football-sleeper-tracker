@@ -65,7 +65,6 @@
       const rows = [];
       for (const id of r.players || []) {
         const p = P(id);
-        if (p[1] === "DEF") continue;
         const adds = d.tx.filter((t) => t.adds && t.adds[id] === r.roster_id);
         const last = adds[adds.length - 1];
         const dp = draftPick[id];
