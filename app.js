@@ -109,7 +109,7 @@
       }
       const s = r.settings || {};
       return {
-        id: r.roster_id, person: person(r), team: teamName(r), user: (userById[r.owner_id] || {}).display_name || "",
+        id: r.roster_id, person: person(r), team: teamName(r), noName: !(((userById[r.owner_id] || {}).metadata || {}).team_name), user: (userById[r.owner_id] || {}).display_name || "",
         w: s.wins || 0, l: s.losses || 0, t: s.ties || 0, pf: (s.fpts || 0) + (s.fpts_decimal || 0) / 100,
         rows, pickRows
       };
@@ -200,7 +200,7 @@
     const nav = m.teams.map((t) => `<a href="#team-${t.id}">${esc(t.person)}</a>`).join("");
     const f1 = (n) => (n == null ? "—" : n.toFixed(1));
     const signed = (n) => (n == null ? "—" : `<span class="${n > 0.05 ? "up" : n < -0.05 ? "down" : ""}">${n > 0.05 ? "+" : ""}${n.toFixed(1)}</span>`);
-    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${f1(t.hi)}</td><td class="num">${f1(t.g ? t.pf / t.g : null)}</td><td class="num">${f1(t.lo)}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
+    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${t.noName ? `<span class="noname" title="Still no team name? Set one in Sleeper.">${esc(t.team)}</span>` : esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${f1(t.hi)}</td><td class="num">${f1(t.g ? t.pf / t.g : null)}</td><td class="num">${f1(t.lo)}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
     const bump = rankChart(m);
     const POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DEF"];
     const posSummary = (rows) => {
