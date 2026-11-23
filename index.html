@@ -7,8 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
-  :root { --bg:#f7f7f5; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#e4e4e7; --accent:#0f766e; --head:#f1f1ef; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1c1c1f; --ink:#ececee; --muted:#9a9aa1; --line:#2c2c31; --accent:#2dd4bf; --head:#232327; } }
+  :root { color-scheme:dark; --bg:#141416; --card:#1c1c1f; --ink:#ececee; --muted:#9a9aa1; --line:#2c2c31; --accent:#2dd4bf; --head:#232327; }
   * { box-sizing: border-box; }
   body { margin:0; font:15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--ink); }
   header { padding:24px 20px 8px; max-width:1100px; margin:0 auto; }
@@ -29,14 +28,14 @@
   th { background:var(--head); font-weight:600; }
   .num { text-align:center; }
   .muted { color:var(--muted); }
-  .pos { display:inline-block; min-width:38px; text-align:center; padding:2px 6px; border-radius:6px; font-size:12px; font-weight:700; color:#fff; }
-  .pos-QB { background:#ff2a6d; }
-  .pos-RB { background:#00ceb8; color:#06302b; }
-  .pos-WR { background:#58a7ff; color:#082848; }
-  .pos-TE { background:#ffae58; color:#4a2a05; }
-  .pos-K { background:#bd66ff; }
-  .pos-DEF { background:#7988a1; }
-  .tag { font-size:11px; padding:1px 6px; border-radius:6px; background:#fee2e2; color:#991b1b; }
+  .pos { font-weight:700; }
+  .pos-QB { color:#ff2a6d; }
+  .pos-RB { color:#00ceb8; }
+  .pos-WR { color:#58a7ff; }
+  .pos-TE { color:#ffae58; }
+  .pos-K { color:#bd66ff; }
+  .pos-DEF { color:#7988a1; }
+  .tag { font-size:11px; padding:1px 6px; border-radius:6px; background:#4a1d1d; color:#fca5a5; }
   a { color:var(--accent); }
   ul.moves { list-style:none; margin:0; padding:0; max-height:360px; overflow-y:auto; }
   ul.moves li { padding:8px 0; border-bottom:1px solid var(--line); }
