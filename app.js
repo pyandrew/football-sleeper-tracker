@@ -150,7 +150,7 @@
     const rules = C.rulesText.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("");
 
     app.innerHTML = `
-      <nav class="teams">${nav}<a href="#rules">Keeper rules</a><a href="rules.html">Full league rules</a></nav>
+      <nav class="teams">${nav}<a href="#rules">Keeper rules</a><a href="rules.html">Full league rules</a><a href="https://ordinarygentlemen.pages.dev/">League history</a></nav>
       <section><h2>Standings</h2><div class="scroll"><table><thead><tr><th class="num">#</th><th>Manager</th><th>Team</th><th class="num">Record</th><th class="num">Points</th></tr></thead><tbody>${standings}</tbody></table></div></section>
       <section><h2>Recent moves</h2><ul class="moves">${recent || "<li class='muted'>No moves yet.</li>"}</ul></section>
       ${teamSections}
