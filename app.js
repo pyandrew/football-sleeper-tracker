@@ -119,7 +119,7 @@
 
     // Week-by-week: running record for the rank chart, plus PA / high / low.
     const run = Object.fromEntries(teams.map((t) => [t.id, { id: t.id, w: 0, t: 0, pf: 0 }]));
-    const stat = Object.fromEntries(teams.map((t) => [t.id, { pa: 0, hi: null, lo: null, g: 0, ranks: [] }]));
+    const stat = Object.fromEntries(teams.map((t) => [t.id, { pa: 0, hi: null, lo: null, g: 0, expW: 0, ranks: [] }]));
     for (const week of d.matchups) {
       const games = {};
       for (const m of week) if (m.matchup_id != null) (games[m.matchup_id] = games[m.matchup_id] || []).push(m);
@@ -132,6 +132,14 @@
           st.lo = st.lo == null ? pts : Math.min(st.lo, pts);
           if (pts > opp) r.w += 1; else if (pts === opp) r.t += 1;
         }
+      }
+      // Expected wins: share of the other teams your score beat that week (ties count half).
+      const scored = week.filter((x) => stat[x.roster_id]);
+      for (const x of scored) {
+        const others = scored.filter((o) => o !== x);
+        if (!others.length) continue;
+        const beat = others.reduce((n, o) => n + ((x.points || 0) > (o.points || 0) ? 1 : (x.points || 0) === (o.points || 0) ? 0.5 : 0), 0);
+        stat[x.roster_id].expW += beat / others.length;
       }
       Object.values(run).sort(recordSort).forEach((r, i) => stat[r.id].ranks.push(i + 1));
     }
@@ -191,7 +199,8 @@
     const costCell = (c) => (c ? `<td class="num">${ordinal(c)}</td>` : `<td class="num muted">—</td>`);
     const nav = m.teams.map((t) => `<a href="#team-${t.id}">${esc(t.person)}</a>`).join("");
     const f1 = (n) => (n == null ? "—" : n.toFixed(1));
-    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${t.pf.toFixed(1)}</td><td class="num">${f1(t.g ? t.pa : null)}</td><td class="num">${f1(t.g ? t.pf / t.g : null)}</td><td class="num">${f1(t.hi)}</td><td class="num">${f1(t.lo)}</td></tr>`).join("");
+    const signed = (n) => (n == null ? "—" : `<span class="${n > 0.05 ? "up" : n < -0.05 ? "down" : ""}">${n > 0.05 ? "+" : ""}${n.toFixed(1)}</span>`);
+    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${f1(t.hi)}</td><td class="num">${f1(t.g ? t.pf / t.g : null)}</td><td class="num">${f1(t.lo)}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
     const bump = rankChart(m);
     const POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DEF"];
     const posSummary = (rows) => {
@@ -219,7 +228,8 @@
       <nav class="teams"><div class="nav-row">${nav}<span class="sep sep-main" aria-hidden="true"></span><a class="info" href="#rules">Keeper rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="rules.html">Full league rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="https://ordinarygentlemen.pages.dev/">League history</a></div></nav>
       <section id="standings">
         <div class="sec-head"><h2>Standings</h2>${bump ? `<div class="seg" role="tablist"><button type="button" class="on" data-view="table">Table</button><button type="button" data-view="chart">By week</button></div>` : ""}</div>
-        <div data-pane="table"><div class="scroll"><table><thead><tr><th class="num">#</th><th>Manager</th><th>Team</th><th class="num">Record</th><th class="num">PF</th><th class="num">PA</th><th class="num">Avg</th><th class="num">High</th><th class="num">Low</th></tr></thead><tbody>${standings}</tbody></table></div></div>
+        <div data-pane="table"><div class="scroll"><table><thead><tr><th class="num">#</th><th>Manager</th><th>Team</th><th class="num">Record</th><th class="num">Diff</th><th class="num">High</th><th class="num">Avg</th><th class="num">Low</th><th class="num">Luck</th></tr></thead><tbody>${standings}</tbody></table></div>
+        <p class="note">Luck = actual wins minus expected wins. Expected wins are based on how many teams your score would have beaten each week. Positive means your record is better than your scoring; negative means worse.</p></div>
         ${bump ? `<div data-pane="chart" hidden>${bump}<p class="note">Rank after each week, by record then points for. Hover a line to highlight it.</p></div>` : ""}
       </section>
       <section><h2>Recent moves</h2><ul class="moves">${recent || "<li class='muted'>No moves yet.</li>"}</ul></section>
