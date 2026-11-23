@@ -141,7 +141,7 @@
         <h2>${esc(t.person)} <span class="sub">${esc(t.team)} · ${t.w}-${t.l}${t.t ? "-" + t.t : ""} · @${esc(t.user)}</span></h2>
         <div class="scroll"><table>
           <thead><tr><th>Player</th><th>Pos</th><th>How acquired</th><th class="num">Drafted</th>${C.keeperSeasons.map((s, i) => `<th class="num">${s}<br><span class="sub">${ordinal(i + 1)} keep</span></th>`).join("")}</tr></thead>
-          <tbody>${t.rows.map((r) => `<tr><td>${esc(r.name)}${r.ir ? ' <span class="tag">IR</span>' : ""}</td><td>${esc(r.pos)}</td><td>${esc(r.how)}</td><td class="num">${r.rd === "FA" ? "Undrafted" : ordinal(r.rd)}</td>${r.costs.map(costCell).join("")}</tr>`).join("")}</tbody>
+          <tbody>${t.rows.map((r) => `<tr><td>${esc(r.name)}${r.ir ? ' <span class="tag">IR</span>' : ""}</td><td><span class="pos pos-${esc(r.pos)}">${esc(r.pos)}</span></td><td>${esc(r.how)}</td><td class="num">${r.rd === "FA" ? "Undrafted" : ordinal(r.rd)}</td>${r.costs.map(costCell).join("")}</tr>`).join("")}</tbody>
         </table></div>
         <h3>Draft pick trades</h3>
         ${t.pickRows.length ? `<div class="scroll"><table class="picks"><thead><tr><th>Season</th><th class="num">Round</th><th class="num"># of picks</th><th>Details</th></tr></thead><tbody>${t.pickRows.map((p) => `<tr><td>${p.season}</td><td class="num">${ordinal(p.rd)}</td><td class="num${p.n === 0 ? " muted" : ""}">${p.n}</td><td>${esc(p.detail)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">No draft-pick trades. One pick in every round.</p>`}
