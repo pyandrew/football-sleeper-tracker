@@ -42,7 +42,11 @@
     // Always read every week so the full trade history is there, in season or out.
     const weeks = await Promise.all(Array.from({ length: 19 }, (_, w) => getJSON(`${API}/league/${L}/transactions/${w}`).catch(() => [])));
     const tx = weeks.flat().filter((t) => t.status === "complete").sort((a, b) => a.status_updated - b.status_updated);
-    return { league, users, rosters, picks, traded, tx, players };
+    // Scored regular-season weeks, for the standings-by-week chart and season stats.
+    const ls = league.settings || {};
+    const lastWeek = Math.min(ls.last_scored_leg || 0, (ls.playoff_week_start || 99) - 1);
+    const matchups = await Promise.all(Array.from({ length: lastWeek }, (_, i) => getJSON(`${API}/league/${L}/matchups/${i + 1}`).catch(() => [])));
+    return { league, users, rosters, picks, traded, tx, players, matchups };
   }
 
   function build(d) {
@@ -110,7 +114,28 @@
         rows, pickRows
       };
     });
-    teams.sort((a, b) => b.w - a.w || b.pf - a.pf);
+    const recordSort = (a, b) => (b.w + b.t / 2) - (a.w + a.t / 2) || b.pf - a.pf;
+    teams.sort(recordSort);
+
+    // Week-by-week: running record for the rank chart, plus PA / high / low.
+    const run = Object.fromEntries(teams.map((t) => [t.id, { id: t.id, w: 0, t: 0, pf: 0 }]));
+    const stat = Object.fromEntries(teams.map((t) => [t.id, { pa: 0, hi: null, lo: null, g: 0, ranks: [] }]));
+    for (const week of d.matchups) {
+      const games = {};
+      for (const m of week) if (m.matchup_id != null) (games[m.matchup_id] = games[m.matchup_id] || []).push(m);
+      for (const [a, b] of Object.values(games)) {
+        if (!a || !b || !run[a.roster_id] || !run[b.roster_id]) continue;
+        for (const [x, y] of [[a, b], [b, a]]) {
+          const pts = x.points || 0, opp = y.points || 0, st = stat[x.roster_id], r = run[x.roster_id];
+          r.pf += pts; st.pa += opp; st.g += 1;
+          st.hi = st.hi == null ? pts : Math.max(st.hi, pts);
+          st.lo = st.lo == null ? pts : Math.min(st.lo, pts);
+          if (pts > opp) r.w += 1; else if (pts === opp) r.t += 1;
+        }
+      }
+      Object.values(run).sort(recordSort).forEach((r, i) => stat[r.id].ranks.push(i + 1));
+    }
+    teams.forEach((t) => Object.assign(t, stat[t.id]));
 
     const recent = d.tx.filter((t) => ["trade", "waiver", "free_agent"].includes(t.type)).slice(-25).reverse().map((t) => {
       const when = new Date(t.status_updated).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -129,13 +154,45 @@
       return { when, kind, lines };
     });
 
-    return { teams, recent, season: d.league.season, leagueName: d.league.name };
+    const playoffTeams = (d.league.settings && d.league.settings.playoff_teams) || 4;
+    return { teams, recent, season: d.league.season, leagueName: d.league.name, weeks: d.matchups.length, playoffTeams };
+  }
+
+  const LINE_COLOURS = ["#59a7ff", "#20ceb8", "#feae58", "#c96cff", "#fc2b6d", "#8bd450", "#f5d547", "#ff8a5b", "#7aa2c9", "#e58bd3", "#b0b0b8", "#5fd0e8"];
+  function rankChart(m) {
+    const W = m.weeks, N = m.teams.length;
+    if (W < 1) return "";
+    const L = 60, R = 570, T = 20, B = 300;
+    const x = (w) => (W === 1 ? (L + R) / 2 : L + ((w - 1) * (R - L)) / (W - 1));
+    const y = (r) => T + ((r - 1) * (B - T)) / Math.max(N - 1, 1);
+    let g = "";
+    for (let r = 1; r <= N; r++) g += `<line x1="${L}" x2="${R}" y1="${y(r)}" y2="${y(r)}" class="grid"/><text x="${L - 40}" y="${y(r) + 4}" class="axis">#${r}</text>`;
+    const cut = (y(m.playoffTeams) + y(m.playoffTeams + 1)) / 2;
+    g += `<line x1="${L - 8}" x2="${R + 8}" y1="${cut}" y2="${cut}" class="cutline"/>`;
+    for (let w = 1; w <= W; w++) g += `<text x="${x(w)}" y="${B + 22}" class="axis" text-anchor="middle">Wk ${w}</text>`;
+    const lines = m.teams.map((t, i) => {
+      const c = LINE_COLOURS[i % LINE_COLOURS.length];
+      const pts = t.ranks.map((r, k) => `${x(k + 1)},${y(r)}`);
+      return `<g class="team-line"><polyline points="${pts.join(" ")}" stroke="${c}"/>${t.ranks.map((r, k) => `<circle cx="${x(k + 1)}" cy="${y(r)}" r="3.5" fill="${c}"/>`).join("")}<text x="${R + 12}" y="${y(t.ranks[t.ranks.length - 1]) + 4}" fill="${c}">${esc(t.person)}</text></g>`;
+    }).join("");
+    return `<svg class="bump" viewBox="0 0 680 330" role="img" aria-label="Standings position after each week">${g}${lines}</svg>`;
+  }
+
+  function wireStandingsToggle() {
+    const sec = document.getElementById("standings");
+    if (!sec) return;
+    sec.querySelectorAll(".seg button").forEach((btn) => btn.addEventListener("click", () => {
+      sec.querySelectorAll(".seg button").forEach((b) => b.classList.toggle("on", b === btn));
+      sec.querySelectorAll("[data-pane]").forEach((p) => { p.hidden = p.dataset.pane !== btn.dataset.view; });
+    }));
   }
 
   function render(m) {
     const costCell = (c) => (c ? `<td class="num">${ordinal(c)}</td>` : `<td class="num muted">—</td>`);
     const nav = m.teams.map((t) => `<a href="#team-${t.id}">${esc(t.person)}</a>`).join("");
-    const standings = m.teams.map((t, i) => `<tr><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${t.pf.toFixed(1)}</td></tr>`).join("");
+    const f1 = (n) => (n == null ? "—" : n.toFixed(1));
+    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${t.pf.toFixed(1)}</td><td class="num">${f1(t.g ? t.pa : null)}</td><td class="num">${f1(t.g ? t.pf / t.g : null)}</td><td class="num">${f1(t.hi)}</td><td class="num">${f1(t.lo)}</td></tr>`).join("");
+    const bump = rankChart(m);
     const POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DEF"];
     const posSummary = (rows) => {
       const n = {};
@@ -160,11 +217,17 @@
 
     app.innerHTML = `
       <nav class="teams"><div class="nav-row">${nav}<span class="sep sep-main" aria-hidden="true"></span><a class="info" href="#rules">Keeper rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="rules.html">Full league rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="https://ordinarygentlemen.pages.dev/">League history</a></div></nav>
-      <section><h2>Standings</h2><div class="scroll"><table><thead><tr><th class="num">#</th><th>Manager</th><th>Team</th><th class="num">Record</th><th class="num">Points</th></tr></thead><tbody>${standings}</tbody></table></div></section>
+      <section id="standings">
+        <div class="sec-head"><h2>Standings</h2>${bump ? `<div class="seg" role="tablist"><button type="button" class="on" data-view="table">Table</button><button type="button" data-view="chart">By week</button></div>` : ""}</div>
+        <div data-pane="table"><div class="scroll"><table><thead><tr><th class="num">#</th><th>Manager</th><th>Team</th><th class="num">Record</th><th class="num">PF</th><th class="num">PA</th><th class="num">Avg</th><th class="num">High</th><th class="num">Low</th></tr></thead><tbody>${standings}</tbody></table></div>
+        <p class="note">Dashed line = playoff cut (top ${m.playoffTeams})</p></div>
+        ${bump ? `<div data-pane="chart" hidden>${bump}<p class="note">Rank after each week, by record then points for. Hover a line to highlight it.</p></div>` : ""}
+      </section>
       <section><h2>Recent moves</h2><ul class="moves">${recent || "<li class='muted'>No moves yet.</li>"}</ul></section>
       ${teamSections}
       <section id="rules"><h2>Keeper rules</h2><p><a href="rules.html">Read the full league rules &rarr;</a></p><p class="sub">Keeper costs show the round needed for each consecutive keep. "—" means the player can't be kept that year. Collisions (two keepers in one round) and traded-away picks can push a keeper to an earlier round; this page shows the base cost only.</p><table><tbody>${rules}</tbody></table></section>`;
     statusEl.textContent = `Live from Sleeper · updated ${new Date().toLocaleString()}`;
+    wireStandingsToggle();
   }
 
   load().then((d) => render(build(d))).catch((e) => {

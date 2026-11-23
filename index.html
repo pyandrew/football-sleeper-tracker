@@ -41,6 +41,23 @@
   .pos-TE { color:#feae58; }
   .pos-K { color:#c96cff; }
   .pos-DEF { color:#bf5f40; }
+  .sec-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+  .sec-head h2 { margin:0; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:999px; padding:2px; background:var(--bg); }
+  .seg button { all:unset; cursor:pointer; font-size:12px; padding:4px 12px; border-radius:999px; color:var(--muted); }
+  .seg button.on { background:var(--line); color:var(--ink); }
+  .seg button:focus-visible { outline:2px solid var(--accent); }
+  tr.cut td { border-bottom:1px dashed var(--accent); }
+  .note { color:var(--muted); font-size:12px; margin:8px 0 0; }
+  svg.bump { width:100%; height:auto; display:block; }
+  svg.bump .grid { stroke:var(--line); }
+  svg.bump .axis { fill:var(--muted); font-size:11px; }
+  svg.bump .cutline { stroke:var(--accent); stroke-dasharray:4 4; opacity:.6; }
+  svg.bump polyline { fill:none; stroke-width:2.5; }
+  svg.bump .team-line text { font-size:12px; }
+  svg.bump .team-line { transition:opacity .15s; }
+  svg.bump:hover .team-line { opacity:.15; }
+  svg.bump .team-line:hover { opacity:1; }
   .pos-sum { display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; font-size:13px; padding:10px 8px 2px; border-top:1px solid var(--line); margin-top:2px; }
   .pos-sum .total { color:var(--muted); margin-left:auto; }
   .nfl { color:var(--muted); font-size:11px; margin-left:6px; }
@@ -62,8 +79,8 @@
 </header>
 <main id="app"></main>
 <footer>Data comes live from Sleeper each time the page loads. Keeper costs follow the league rules in config.js.</footer>
-<script src="config.js?v=17"></script>
-<script src="app.js?v=17"></script>
+<script src="config.js?v=18"></script>
+<script src="app.js?v=18"></script>
 <button id="to-top" type="button" aria-label="Back to top" title="Back to top">&uarr; Back to top</button>
 <script>
   (function () {
