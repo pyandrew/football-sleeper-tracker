@@ -41,6 +41,8 @@
   .pos-TE { color:#feae58; }
   .pos-K { color:#c96cff; }
   .pos-DEF { color:#bf5f40; }
+  .pos-sum { display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; font-size:13px; padding:10px 8px 2px; border-top:1px solid var(--line); margin-top:2px; }
+  .pos-sum .total { color:var(--muted); margin-left:auto; }
   .nfl { color:var(--muted); font-size:11px; margin-left:6px; }
   .tag { font-size:11px; padding:1px 6px; border-radius:6px; background:#fee2e2; color:#991b1b; }
   a { color:var(--accent); }
@@ -60,8 +62,8 @@
 </header>
 <main id="app"></main>
 <footer>Data comes live from Sleeper each time the page loads. Keeper costs follow the league rules in config.js.</footer>
-<script src="config.js?v=16"></script>
-<script src="app.js?v=16"></script>
+<script src="config.js?v=17"></script>
+<script src="app.js?v=17"></script>
 <button id="to-top" type="button" aria-label="Back to top" title="Back to top">&uarr; Back to top</button>
 <script>
   (function () {

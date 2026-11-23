@@ -136,6 +136,14 @@
     const costCell = (c) => (c ? `<td class="num">${ordinal(c)}</td>` : `<td class="num muted">—</td>`);
     const nav = m.teams.map((t) => `<a href="#team-${t.id}">${esc(t.person)}</a>`).join("");
     const standings = m.teams.map((t, i) => `<tr><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${t.pf.toFixed(1)}</td></tr>`).join("");
+    const POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DEF"];
+    const posSummary = (rows) => {
+      const n = {};
+      rows.forEach((r) => { n[r.pos] = (n[r.pos] || 0) + 1; });
+      const order = POS_ORDER.concat(Object.keys(n).filter((p) => !POS_ORDER.includes(p)));
+      const parts = order.filter((p) => n[p]).map((p) => `<span><span class="pos pos-${esc(p)}">${esc(p)}</span> ${n[p]}</span>`).join("");
+      return `<div class="pos-sum">${parts}<span class="total">${rows.length} players</span></div>`;
+    };
     const teamSections = m.teams.map((t) => `
       <section class="team" id="team-${t.id}">
         <h2>${esc(t.person)} <span class="sub">${esc(t.team)} · ${t.w}-${t.l}${t.t ? "-" + t.t : ""} · @${esc(t.user)}</span></h2>
@@ -143,6 +151,7 @@
           <thead><tr><th>Player</th><th>Pos</th><th>How acquired</th><th class="num">Drafted</th>${C.keeperSeasons.map((s, i) => `<th class="num">${s}<br><span class="sub">${ordinal(i + 1)} keep</span></th>`).join("")}</tr></thead>
           <tbody>${t.rows.map((r) => `<tr><td>${esc(r.name)}${r.team && r.pos !== "DEF" ? `<span class="nfl">${esc(r.team)}</span>` : ""}${r.ir ? ' <span class="tag">IR</span>' : ""}</td><td><span class="pos pos-${esc(r.pos)}">${esc(r.pos)}</span></td><td>${esc(r.how)}</td><td class="num">${r.rd === "FA" ? "Undrafted" : ordinal(r.rd)}</td>${r.costs.map(costCell).join("")}</tr>`).join("")}</tbody>
         </table></div>
+        ${posSummary(t.rows)}
         <h3>Draft pick trades</h3>
         ${t.pickRows.length ? `<div class="scroll"><table class="picks"><thead><tr><th>Season</th><th class="num">Round</th><th class="num"># of picks</th><th>Details</th></tr></thead><tbody>${t.pickRows.map((p) => `<tr><td>${p.season}</td><td class="num">${ordinal(p.rd)}</td><td class="num${p.n === 0 ? " muted" : ""}">${p.n}</td><td>${esc(p.detail)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">No draft-pick trades. One pick in every round.</p>`}
       </section>`).join("");
