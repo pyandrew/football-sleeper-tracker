@@ -280,7 +280,9 @@
   }
 
   function render(m) {
-    const costCell = (c) => (c ? `<td class="num">${ordinal(c)}</td>` : `<td class="num muted">—</td>`);
+    // Each cell shows the keeper round plus which keep it would be (small). priorKeeps stays 0 until
+    // past seasons' keeper picks are read in (next season), so this year keep # = column order.
+    const costCell = (c, i, r) => (c ? `<td class="num">${ordinal(c)}<span class="keep-n">${ordinal(i + 1 + (r.priorKeeps || 0))}</span></td>` : `<td class="num muted">—</td>`);
     const nav = m.teams.map((t) => `<a href="#team-${t.id}">${esc(t.person)}</a>`).join("");
     const f1 = (n) => (n == null ? "—" : n.toFixed(1));
     const signed = (n) => (n == null ? "—" : `<span class="${n > 0.05 ? "up" : n < -0.05 ? "down" : ""}">${n > 0.05 ? "+" : ""}${n.toFixed(1)}</span>`);
@@ -303,8 +305,8 @@
       <section class="team" id="team-${t.id}">
         <h2>${esc(t.person)} <span class="sub">${esc(t.team)} · ${t.w}-${t.l}${t.t ? "-" + t.t : ""} · @${esc(t.user)}</span></h2>
         <div class="scroll"><table>
-          <thead><tr><th>Player</th><th>Pos</th><th>How acquired</th><th class="num">Drafted</th>${C.keeperSeasons.map((s, i) => `<th class="num">${s}<span class="keep-n"><br><span class="sub">${ordinal(i + 1)} keep</span></span></th>`).join("")}</tr></thead>
-          <tbody>${t.rows.map((r) => `<tr><td>${esc(r.name)}${r.team && r.pos !== "DEF" ? `<span class="nfl">${esc(r.team)}</span>` : ""}${r.ir ? ' <span class="tag">IR</span>' : ""}</td><td><span class="pos pos-${esc(r.pos)}">${esc(r.pos)}</span></td><td>${esc(r.how)}</td><td class="num">${r.rd === "FA" ? "Undrafted" : ordinal(r.rd)}</td>${r.costs.map(costCell).join("")}</tr>`).join("")}</tbody>
+          <thead><tr><th>Player</th><th>Pos</th><th>How acquired</th><th class="num">Drafted</th>${C.keeperSeasons.map((s, i) => `<th class="num">${s}${i === 0 ? ' <span class="keep-hint">(keep #)</span>' : ""}</th>`).join("")}</tr></thead>
+          <tbody>${t.rows.map((r) => `<tr><td>${esc(r.name)}${r.team && r.pos !== "DEF" ? `<span class="nfl">${esc(r.team)}</span>` : ""}${r.ir ? ' <span class="tag">IR</span>' : ""}</td><td><span class="pos pos-${esc(r.pos)}">${esc(r.pos)}</span></td><td>${esc(r.how)}</td><td class="num">${r.rd === "FA" ? "Undrafted" : ordinal(r.rd)}</td>${r.costs.map((c, i) => costCell(c, i, r)).join("")}</tr>`).join("")}</tbody>
         </table></div>
         ${posSummary(t.rows)}
         <h3>Draft pick trades</h3>

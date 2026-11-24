@@ -64,6 +64,8 @@
   table.results .res-cell { height:26px; vertical-align:middle; line-height:26px; min-width:34px; border-radius:5px; text-align:center; font-size:11px; font-weight:700; cursor:default; padding:0; }
   .res-legend { display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:var(--muted); margin-top:6px; }
   .res-legend i { display:inline-block; width:14px; height:12px; border-radius:3px; vertical-align:-2px; margin-right:4px; }
+  .keep-n { color:var(--muted); font-size:11px; margin-left:5px; }
+  .keep-hint { color:var(--muted); font-size:11px; font-weight:400; }
   .note { color:var(--muted); font-size:12px; margin:8px 0 0; }
   svg.bump { width:100%; height:auto; display:block; }
   svg.bump .grid { stroke:var(--line); }
@@ -113,7 +115,7 @@
     .note .bench-note { display:none; }
     section.team table:not(.picks) th:first-child, section.team table:not(.picks) td:first-child { position:sticky; left:0; z-index:1; background:var(--card); box-shadow:-3px 0 0 var(--card), 1px 0 0 var(--line); }
     section.team table:not(.picks) th:first-child { background:var(--head); box-shadow:-3px 0 0 var(--head), 1px 0 0 var(--line); }
-    .keep-n { display:none; }
+    .keep-n, .keep-hint { display:none; }
     table.results .res-name { position:sticky; left:0; z-index:1; background:var(--card); box-shadow:-3px 0 0 var(--card); }
   }
 </style>
@@ -125,8 +127,8 @@
 </header>
 <main id="app"></main>
 <footer>Data comes live from Sleeper each time the page loads. Keeper costs follow the league rules in config.js.</footer>
-<script src="config.js?v=28"></script>
-<script src="app.js?v=28"></script>
+<script src="config.js?v=29"></script>
+<script src="app.js?v=29"></script>
 <button id="to-top" type="button" aria-label="Back to top" title="Back to top">&uarr; Back to top</button>
 <script>
   (function () {
