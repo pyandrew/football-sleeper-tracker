@@ -203,7 +203,9 @@
     const lines = m.teams.map((t, i) => {
       const c = LINE_COLOURS[i % LINE_COLOURS.length];
       const pts = t.ranks.map((r, k) => `${x(k + 1)},${y(r)}`);
-      return `<g class="team-line"><polyline points="${pts.join(" ")}" stroke="${c}"/>${t.ranks.map((r, k) => `<circle cx="${x(k + 1)}" cy="${y(r)}" r="3.5" fill="${c}"/>`).join("")}<text x="${R + 12}" y="${y(t.ranks[t.ranks.length - 1]) + 4}" fill="${c}">${esc(t.person)}</text></g>`;
+      let w = 0, l = 0, ti = 0;
+      const recs = t.ranks.map((_, k) => { const res = t.results[k]; if (res) { if (res.d > 0) w++; else if (res.d < 0) l++; else ti++; } return `${w}-${l}${ti ? "-" + ti : ""}`; });
+      return `<g class="team-line" data-rec="${recs.join(",")}" data-colour="${c}"><polyline points="${pts.join(" ")}" stroke="${c}"/>${t.ranks.map((r, k) => `<circle cx="${x(k + 1)}" cy="${y(r)}" r="3.5" fill="${c}"/>`).join("")}<text x="${R + 12}" y="${y(t.ranks[t.ranks.length - 1]) + 4}" fill="${c}">${esc(t.person)} (${t.w}-${t.l}${t.t ? "-" + t.t : ""})</text></g>`;
     }).join("");
     return `<svg class="bump" viewBox="0 0 680 330" role="img" aria-label="Standings position after each week">${g}${lines}</svg>`;
   }
@@ -236,6 +238,23 @@
       sec.querySelectorAll(".seg button").forEach((b) => b.classList.toggle("on", b === btn));
       sec.querySelectorAll("[data-pane]").forEach((p) => { p.hidden = p.dataset.pane !== btn.dataset.view; });
     }));
+    // Records at each dot appear only while that team's line is hovered; they don't exist otherwise.
+    sec.querySelectorAll("svg.bump .team-line").forEach((g) => {
+      g.addEventListener("mouseenter", () => {
+        const recs = g.dataset.rec.split(",");
+        g.querySelectorAll("circle").forEach((dot, k) => {
+          const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          t.setAttribute("x", dot.getAttribute("cx"));
+          t.setAttribute("y", Number(dot.getAttribute("cy")) - 8);
+          t.setAttribute("text-anchor", "middle");
+          t.setAttribute("fill", g.dataset.colour);
+          t.setAttribute("class", "wk-rec");
+          t.textContent = recs[k];
+          g.appendChild(t);
+        });
+      });
+      g.addEventListener("mouseleave", () => g.querySelectorAll(".wk-rec").forEach((t) => t.remove()));
+    });
     const tip = sec.querySelector(".res-tip"), def = tip && tip.textContent;
     sec.querySelectorAll(".res-cell[data-tip]").forEach((c) => {
       c.addEventListener("mouseenter", () => { tip.textContent = c.dataset.tip; });
@@ -283,7 +302,7 @@
         <div class="sec-head"><h2>Standings</h2>${bump ? `<div class="seg" role="tablist"><button type="button" class="on" data-view="table">Table</button><button type="button" data-view="chart">By week</button><button type="button" data-view="results">Results</button></div>` : ""}</div>
         <div data-pane="table"><div class="scroll"><table><thead><tr><th class="num">#</th><th>Manager</th><th>Team</th><th class="num">Record</th><th class="num">Diff</th><th class="num">Avg (low–high)</th><th class="num">Bench pts</th><th class="num">Pts left on bench</th><th class="num">Luck</th></tr></thead><tbody>${standings}</tbody></table></div>
         <p class="note">Bench pts = total points scored by players on the bench. Pts left on bench = extra points your best possible lineup would have scored. Luck = actual wins minus expected wins. Expected wins are based on how many teams your score would have beaten each week. Positive means your record is better than your scoring; negative means worse.</p></div>
-        ${bump ? `<div data-pane="chart" hidden>${bump}<p class="note">Rank after each week, by record then points for. Hover a line to highlight it.</p></div>` : ""}
+        ${bump ? `<div data-pane="chart" hidden>${bump}<p class="note">Rank after each week, by record then points for. Hover a line to see that team's record each week.</p></div>` : ""}
         ${bump ? `<div data-pane="results" hidden>${resultsGrid(m)}</div>` : ""}
       </section>
       <section><h2>Recent moves</h2><ul class="moves">${recent || "<li class='muted'>No moves yet.</li>"}</ul></section>
