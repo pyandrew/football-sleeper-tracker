@@ -106,13 +106,15 @@
     table { font-size:13px; }
     th, td { padding:6px 8px; }
     table.standings .c-team, table.standings .c-bench, table.standings .c-left { display:none; }
-    table.standings .c-rank { position:sticky; left:0; z-index:1; background:var(--card); min-width:30px; width:30px; box-sizing:border-box; }
+    table.standings .c-rank { position:sticky; left:0; z-index:1; background:var(--card); box-shadow:-3px 0 0 var(--card); min-width:30px; width:30px; box-sizing:border-box; }
     table.standings .c-mgr { position:sticky; left:30px; z-index:1; background:var(--card); box-shadow:1px 0 0 var(--line); }
     table.standings th.c-rank, table.standings th.c-mgr { background:var(--head); }
-    section.team table:not(.picks) th:first-child, section.team table:not(.picks) td:first-child { position:sticky; left:0; z-index:1; background:var(--card); box-shadow:1px 0 0 var(--line); }
-    section.team table:not(.picks) th:first-child { background:var(--head); }
+    table.standings th.c-rank { box-shadow:-3px 0 0 var(--head); }
+    .note .bench-note { display:none; }
+    section.team table:not(.picks) th:first-child, section.team table:not(.picks) td:first-child { position:sticky; left:0; z-index:1; background:var(--card); box-shadow:-3px 0 0 var(--card), 1px 0 0 var(--line); }
+    section.team table:not(.picks) th:first-child { background:var(--head); box-shadow:-3px 0 0 var(--head), 1px 0 0 var(--line); }
     .keep-n { display:none; }
-    table.results .res-name { position:sticky; left:0; z-index:1; background:var(--card); }
+    table.results .res-name { position:sticky; left:0; z-index:1; background:var(--card); box-shadow:-3px 0 0 var(--card); }
   }
 </style>
 </head>
