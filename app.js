@@ -197,10 +197,10 @@
       const surelyAhead = others.filter((o) => o.curW > t.maxW).length;
       t.mark = canCatch === 0 ? "*" : canCatch < playoffTeams ? "X" : surelyAhead >= playoffTeams ? "E" : "";
     });
-    // Baseball-style magic / elimination numbers, shown from the halfway point of the regular season.
+    // Baseball-style magic / elimination numbers, shown all regular season.
     // Magic (in a playoff spot): games + 1 - your wins - losses of the first team out.
     // Elim (outside): games + 1 - wins of the last team in - your losses.
-    const showME = left > 0 && d.matchups.length >= Math.ceil(regWeeks / 2) && teams.length > playoffTeams;
+    const showME = left > 0 && teams.length > playoffTeams;
     if (showME) {
       const lastIn = teams[playoffTeams - 1], firstOut = teams[playoffTeams];
       teams.forEach((t, i) => {
