@@ -46,7 +46,7 @@
     const ls = league.settings || {};
     const lastWeek = Math.min(ls.last_scored_leg || 0, (ls.playoff_week_start || 99) - 1);
     const matchups = await Promise.all(Array.from({ length: lastWeek }, (_, i) => getJSON(`${API}/league/${L}/matchups/${i + 1}`).catch(() => [])));
-    return { league, users, rosters, picks, traded, tx, players, matchups };
+    return { league, users, rosters, picks, traded, tx, players, matchups, draftYear: draft ? draft.season : "" };
   }
 
   function build(d) {
@@ -185,7 +185,7 @@
     });
 
     const playoffTeams = (d.league.settings && d.league.settings.playoff_teams) || 4;
-    return { teams, recent, season: d.league.season, leagueName: d.league.name, weeks: d.matchups.length, playoffTeams };
+    return { teams, recent, season: d.league.season, leagueName: d.league.name, draftYear: d.draftYear, weeks: d.matchups.length, playoffTeams };
   }
 
   const LINE_COLOURS = ["#59a7ff", "#20ceb8", "#feae58", "#c96cff", "#fc2b6d", "#8bd450", "#f5d547", "#ff8a5b", "#7aa2c9", "#e58bd3", "#b0b0b8", "#5fd0e8"];
@@ -306,7 +306,7 @@
         <h2>${esc(t.person)} <span class="sub">${esc(t.team)} · ${t.w}-${t.l}${t.t ? "-" + t.t : ""} · @${esc(t.user)}</span></h2>
         <div class="scroll"><table>
           <thead><tr><th>Player</th><th>Pos</th><th>How acquired</th><th class="num">Drafted</th>${C.keeperSeasons.map((s, i) => `<th class="num">${s}</th>`).join("")}</tr></thead>
-          <tbody>${t.rows.map((r) => `<tr><td>${esc(r.name)}${r.team && r.pos !== "DEF" ? `<span class="nfl">${esc(r.team)}</span>` : ""}${r.ir ? ' <span class="tag">IR</span>' : ""}</td><td><span class="pos pos-${esc(r.pos)}">${esc(r.pos)}</span></td><td>${esc(r.how)}</td><td class="num">${r.rd === "FA" ? "Undrafted" : ordinal(r.rd)}</td>${r.costs.map((c, i) => costCell(c, i, r)).join("")}</tr>`).join("")}</tbody>
+          <tbody>${t.rows.map((r) => `<tr><td>${esc(r.name)}${r.team && r.pos !== "DEF" ? `<span class="nfl">${esc(r.team)}</span>` : ""}${r.ir ? ' <span class="tag">IR</span>' : ""}</td><td><span class="pos pos-${esc(r.pos)}">${esc(r.pos)}</span></td><td>${esc(r.how)}</td><td class="num">${r.rd === "FA" ? "Undrafted" : `${ordinal(r.rd)}<span class="keep-n">${esc(m.draftYear)}</span>`}</td>${r.costs.map((c, i) => costCell(c, i, r)).join("")}</tr>`).join("")}</tbody>
         </table></div>
         ${posSummary(t.rows)}
         <h3>Draft pick trades</h3>
