@@ -239,8 +239,22 @@
       sec.querySelectorAll("[data-pane]").forEach((p) => { p.hidden = p.dataset.pane !== btn.dataset.view; });
     }));
     // Records at each dot appear only while that team's line is hovered; they don't exist otherwise.
+    const svg = sec.querySelector("svg.bump");
+    const touch = window.matchMedia("(hover: none)").matches;
+    const clearRecs = () => sec.querySelectorAll(".wk-rec").forEach((t) => t.remove());
     sec.querySelectorAll("svg.bump .team-line").forEach((g) => {
-      g.addEventListener("mouseenter", () => {
+      // Phones have no hover: a tap pins that team's line and records; tap again to clear.
+      g.addEventListener("click", () => {
+        if (!touch) return;
+        const on = !g.classList.contains("active");
+        sec.querySelectorAll("svg.bump .team-line.active").forEach((x) => x.classList.remove("active"));
+        clearRecs();
+        svg.classList.toggle("has-active", on);
+        if (on) { g.classList.add("active"); g.dispatchEvent(new Event("show-recs")); }
+      });
+      g.addEventListener("mouseenter", () => g.dispatchEvent(new Event("show-recs")));
+      g.addEventListener("show-recs", () => {
+        clearRecs();
         const recs = g.dataset.rec.split(",");
         const dots = g.querySelectorAll("circle");
         dots.forEach((dot, k) => {
@@ -255,12 +269,13 @@
           g.appendChild(t);
         });
       });
-      g.addEventListener("mouseleave", () => g.querySelectorAll(".wk-rec").forEach((t) => t.remove()));
+      g.addEventListener("mouseleave", () => { if (!g.classList.contains("active")) clearRecs(); });
     });
     const tip = sec.querySelector(".res-tip"), def = tip && tip.textContent;
     sec.querySelectorAll(".res-cell[data-tip]").forEach((c) => {
       c.addEventListener("mouseenter", () => { tip.textContent = c.dataset.tip; });
       c.addEventListener("mouseleave", () => { tip.textContent = def; });
+      if (touch) c.addEventListener("click", () => { tip.textContent = c.dataset.tip; });
     });
   }
 
@@ -274,7 +289,7 @@
     const played = m.teams.filter((t) => t.g);
     const benchVals = played.map((t) => t.bench), leftVals = played.map((t) => t.left);
     const withRank = (v, vals, hi) => { const r = rankOf(vals, v, hi); return `${f1(v)}<span class="rk${r === 1 ? " top" : ""}">${ordinal(r)}</span>`; };
-    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${t.noName ? `<span class="noname" title="Booo, set a team name">${esc(t.team)}</span>` : esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${t.g ? `${f1(t.pf / t.g)}<span class="range">${f1(t.lo)}–${f1(t.hi)}</span>` : "—"}</td><td class="num">${t.g ? withRank(t.bench, benchVals, true) : "—"}</td><td class="num">${t.g ? withRank(t.left, leftVals, false) : "—"}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
+    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num c-rank">${i + 1}</td><td class="c-mgr"><a href="#team-${t.id}">${esc(t.person)}</a></td><td class="c-team">${t.noName ? `<span class="noname" tabindex="0" title="Booo, set a team name">${esc(t.team)}</span>` : esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${t.g ? `${f1(t.pf / t.g)}<span class="range">${f1(t.lo)}–${f1(t.hi)}</span>` : "—"}</td><td class="num c-bench">${t.g ? withRank(t.bench, benchVals, true) : "—"}</td><td class="num c-left">${t.g ? withRank(t.left, leftVals, false) : "—"}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
     const bump = rankChart(m);
     const POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DEF"];
     const posSummary = (rows) => {
@@ -288,7 +303,7 @@
       <section class="team" id="team-${t.id}">
         <h2>${esc(t.person)} <span class="sub">${esc(t.team)} · ${t.w}-${t.l}${t.t ? "-" + t.t : ""} · @${esc(t.user)}</span></h2>
         <div class="scroll"><table>
-          <thead><tr><th>Player</th><th>Pos</th><th>How acquired</th><th class="num">Drafted</th>${C.keeperSeasons.map((s, i) => `<th class="num">${s}<br><span class="sub">${ordinal(i + 1)} keep</span></th>`).join("")}</tr></thead>
+          <thead><tr><th>Player</th><th>Pos</th><th>How acquired</th><th class="num">Drafted</th>${C.keeperSeasons.map((s, i) => `<th class="num">${s}<span class="keep-n"><br><span class="sub">${ordinal(i + 1)} keep</span></span></th>`).join("")}</tr></thead>
           <tbody>${t.rows.map((r) => `<tr><td>${esc(r.name)}${r.team && r.pos !== "DEF" ? `<span class="nfl">${esc(r.team)}</span>` : ""}${r.ir ? ' <span class="tag">IR</span>' : ""}</td><td><span class="pos pos-${esc(r.pos)}">${esc(r.pos)}</span></td><td>${esc(r.how)}</td><td class="num">${r.rd === "FA" ? "Undrafted" : ordinal(r.rd)}</td>${r.costs.map(costCell).join("")}</tr>`).join("")}</tbody>
         </table></div>
         ${posSummary(t.rows)}
@@ -302,7 +317,7 @@
       <nav class="teams"><div class="nav-row">${nav}<span class="sep sep-main" aria-hidden="true"></span><a class="info" href="#rules">Keeper rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="rules.html">Full league rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="https://ordinarygentlemen.pages.dev/">League history</a></div></nav>
       <section id="standings">
         <div class="sec-head"><h2>Standings</h2>${bump ? `<div class="seg" role="tablist"><button type="button" class="on" data-view="table">Table</button><button type="button" data-view="chart">By week</button><button type="button" data-view="results">Results</button></div>` : ""}</div>
-        <div data-pane="table"><div class="scroll"><table><thead><tr><th class="num">#</th><th>Manager</th><th>Team</th><th class="num">Record</th><th class="num">Diff</th><th class="num">Avg (low–high)</th><th class="num">Bench pts</th><th class="num">Pts left on bench</th><th class="num">Luck</th></tr></thead><tbody>${standings}</tbody></table></div>
+        <div data-pane="table"><div class="scroll"><table class="standings"><thead><tr><th class="num c-rank">#</th><th class="c-mgr">Manager</th><th class="c-team">Team</th><th class="num">Record</th><th class="num">Diff</th><th class="num">Avg (low–high)</th><th class="num c-bench">Bench pts</th><th class="num c-left">Pts left on bench</th><th class="num">Luck</th></tr></thead><tbody>${standings}</tbody></table></div>
         <p class="note">Bench pts = total points scored by players on the bench. Pts left on bench = extra points your best possible lineup would have scored. Luck = actual wins minus expected wins. Expected wins are based on how many teams your score would have beaten each week. Positive means your record is better than your scoring; negative means worse.</p></div>
         ${bump ? `<div data-pane="chart" hidden>${bump}<p class="note">Rank after each week, by record then points for. Hover a line to see that team's record each week.</p></div>` : ""}
         ${bump ? `<div data-pane="results" hidden>${resultsGrid(m)}</div>` : ""}

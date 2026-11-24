@@ -87,6 +87,33 @@
   #to-top { position:fixed; right:18px; bottom:18px; height:40px; padding:0 16px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--accent); font:600 14px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.15); opacity:0; pointer-events:none; transition:opacity .2s; z-index:5; }
   #to-top.show { opacity:1; pointer-events:auto; }
   #to-top:hover { border-color:var(--accent); }
+
+  /* Tap support (touch screens): pinned line in the by-week chart, team-name nudge on tap. */
+  svg.bump.has-active .team-line { opacity:.15; }
+  svg.bump.has-active .team-line.active { opacity:1; }
+  .noname:focus { outline:none; }
+  .noname:focus::after { opacity:1; }
+
+  /* Phone layout */
+  @media (max-width: 640px) {
+    header { padding:16px 12px 6px; }
+    header h1 { font-size:17px; }
+    main { padding:0 10px 60px; }
+    section { padding:12px; }
+    nav.teams .nav-row { flex-wrap:nowrap; justify-content:flex-start; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+    nav.teams .nav-row::-webkit-scrollbar { display:none; }
+    nav.teams .nav-row > * { flex:0 0 auto; }
+    table { font-size:13px; }
+    th, td { padding:6px 8px; }
+    table.standings .c-team, table.standings .c-bench, table.standings .c-left { display:none; }
+    table.standings .c-rank { position:sticky; left:0; z-index:1; background:var(--card); min-width:30px; width:30px; box-sizing:border-box; }
+    table.standings .c-mgr { position:sticky; left:30px; z-index:1; background:var(--card); box-shadow:1px 0 0 var(--line); }
+    table.standings th.c-rank, table.standings th.c-mgr { background:var(--head); }
+    section.team table:not(.picks) th:first-child, section.team table:not(.picks) td:first-child { position:sticky; left:0; z-index:1; background:var(--card); box-shadow:1px 0 0 var(--line); }
+    section.team table:not(.picks) th:first-child { background:var(--head); }
+    .keep-n { display:none; }
+    table.results .res-name { position:sticky; left:0; z-index:1; background:var(--card); }
+  }
 </style>
 </head>
 <body>
@@ -96,8 +123,8 @@
 </header>
 <main id="app"></main>
 <footer>Data comes live from Sleeper each time the page loads. Keeper costs follow the league rules in config.js.</footer>
-<script src="config.js?v=27"></script>
-<script src="app.js?v=27"></script>
+<script src="config.js?v=28"></script>
+<script src="app.js?v=28"></script>
 <button id="to-top" type="button" aria-label="Back to top" title="Back to top">&uarr; Back to top</button>
 <script>
   (function () {
