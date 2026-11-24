@@ -119,7 +119,21 @@
 
     // Week-by-week: running record for the rank chart, plus PA / high / low.
     const run = Object.fromEntries(teams.map((t) => [t.id, { id: t.id, w: 0, t: 0, pf: 0 }]));
-    const stat = Object.fromEntries(teams.map((t) => [t.id, { pa: 0, hi: null, lo: null, g: 0, expW: 0, ranks: [] }]));
+    const stat = Object.fromEntries(teams.map((t) => [t.id, { pa: 0, hi: null, lo: null, g: 0, expW: 0, bench: 0, left: 0, ranks: [] }]));
+    // Best possible lineup for a week, from the league's starting slots.
+    const SLOT_OK = { QB: ["QB"], RB: ["RB"], WR: ["WR"], TE: ["TE"], K: ["K"], DEF: ["DEF"], FLEX: ["RB", "WR", "TE"], WRRB_FLEX: ["RB", "WR"], REC_FLEX: ["WR", "TE"], SUPER_FLEX: ["QB", "RB", "WR", "TE"] };
+    const startSlots = (d.league.roster_positions || []).filter((x) => SLOT_OK[x]).sort((a, b) => SLOT_OK[a].length - SLOT_OK[b].length);
+    const bestLineup = (m) => {
+      const pts = m.players_points || {};
+      const pool = (m.players || []).map((id) => [P(id)[1], pts[id] || 0]);
+      let total = 0;
+      for (const slot of startSlots) {
+        let bi = -1;
+        pool.forEach(([pos, p], i) => { if (SLOT_OK[slot].includes(pos) && (bi < 0 || p > pool[bi][1])) bi = i; });
+        if (bi >= 0) { total += pool[bi][1]; pool.splice(bi, 1); }
+      }
+      return total;
+    };
     for (const week of d.matchups) {
       const games = {};
       for (const m of week) if (m.matchup_id != null) (games[m.matchup_id] = games[m.matchup_id] || []).push(m);
@@ -132,6 +146,13 @@
           st.lo = st.lo == null ? pts : Math.min(st.lo, pts);
           if (pts > opp) r.w += 1; else if (pts === opp) r.t += 1;
         }
+      }
+      for (const x of week) {
+        const st = stat[x.roster_id];
+        if (!st) continue;
+        const starters = new Set(x.starters || []), pts = x.players_points || {};
+        st.bench += (x.players || []).filter((id) => !starters.has(id)).reduce((n, id) => n + (pts[id] || 0), 0);
+        st.left += Math.max(0, bestLineup(x) - (x.points || 0));
       }
       // Expected wins: share of the other teams your score beat that week (ties count half).
       const scored = week.filter((x) => stat[x.roster_id]);
@@ -200,7 +221,7 @@
     const nav = m.teams.map((t) => `<a href="#team-${t.id}">${esc(t.person)}</a>`).join("");
     const f1 = (n) => (n == null ? "—" : n.toFixed(1));
     const signed = (n) => (n == null ? "—" : `<span class="${n > 0.05 ? "up" : n < -0.05 ? "down" : ""}">${n > 0.05 ? "+" : ""}${n.toFixed(1)}</span>`);
-    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${t.noName ? `<span class="noname" title="Booo, set a team name">${esc(t.team)}</span>` : esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${f1(t.hi)}</td><td class="num">${f1(t.g ? t.pf / t.g : null)}</td><td class="num">${f1(t.lo)}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
+    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${t.noName ? `<span class="noname" title="Booo, set a team name">${esc(t.team)}</span>` : esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${f1(t.g ? t.bench : null)}</td><td class="num">${f1(t.g ? t.left : null)}</td><td class="num">${t.g ? `${f1(t.pf / t.g)}<span class="range">${f1(t.lo)}–${f1(t.hi)}</span>` : "—"}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
     const bump = rankChart(m);
     const POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DEF"];
     const posSummary = (rows) => {
@@ -228,8 +249,8 @@
       <nav class="teams"><div class="nav-row">${nav}<span class="sep sep-main" aria-hidden="true"></span><a class="info" href="#rules">Keeper rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="rules.html">Full league rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="https://ordinarygentlemen.pages.dev/">League history</a></div></nav>
       <section id="standings">
         <div class="sec-head"><h2>Standings</h2>${bump ? `<div class="seg" role="tablist"><button type="button" class="on" data-view="table">Table</button><button type="button" data-view="chart">By week</button></div>` : ""}</div>
-        <div data-pane="table"><div class="scroll"><table><thead><tr><th class="num">#</th><th>Manager</th><th>Team</th><th class="num">Record</th><th class="num">Diff</th><th class="num">High</th><th class="num">Avg</th><th class="num">Low</th><th class="num">Luck</th></tr></thead><tbody>${standings}</tbody></table></div>
-        <p class="note">Luck = actual wins minus expected wins. Expected wins are based on how many teams your score would have beaten each week. Positive means your record is better than your scoring; negative means worse.</p></div>
+        <div data-pane="table"><div class="scroll"><table><thead><tr><th class="num">#</th><th>Manager</th><th>Team</th><th class="num">Record</th><th class="num">Diff</th><th class="num">Bench pts</th><th class="num">Pts left on bench</th><th class="num">Avg (low–high)</th><th class="num">Luck</th></tr></thead><tbody>${standings}</tbody></table></div>
+        <p class="note">Bench pts = total points scored by players on the bench. Pts left on bench = extra points your best possible lineup would have scored. Luck = actual wins minus expected wins. Expected wins are based on how many teams your score would have beaten each week. Positive means your record is better than your scoring; negative means worse.</p></div>
         ${bump ? `<div data-pane="chart" hidden>${bump}<p class="note">Rank after each week, by record then points for. Hover a line to highlight it.</p></div>` : ""}
       </section>
       <section><h2>Recent moves</h2><ul class="moves">${recent || "<li class='muted'>No moves yet.</li>"}</ul></section>
