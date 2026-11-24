@@ -38,6 +38,7 @@ Three views, switched with the **Table / By week / Results** buttons.
 |---|---|
 | # / Manager / Team | Rank, manager's first name (links to their roster), and Sleeper team name |
 | Record | Wins-losses (-ties) |
+| M/E # | Baseball-style **magic number** (green) for teams in a playoff spot: your wins plus losses by the first team out until you clinch. **Elimination number** (orange) for teams outside: your losses plus wins by the last team in until you're out. Shown all regular season. Hides once the regular season ends |
 | Diff | Points for minus points against. Green if positive, red if negative |
 | Avg (low–high) | Average points per game, with the season's lowest and highest scores in small text |
 | Bench pts | Total points scored by players on the bench, with rank (1st = most) |
@@ -48,7 +49,7 @@ Three views, switched with the **Table / By week / Results** buttons.
 - **Best possible lineup:** for each week, the highest-scoring rostered players are fitted to the league's starting slots (QB, 2 RB, 3 WR, TE, K, DEF). Flex slots are supported if the league adds them.
 - **Rank labels:** 1st place in Bench pts and Pts left on bench is highlighted in orange.
 - **Team-name nudge:** managers who never set a Sleeper team name (it falls back to their username) get a dotted underline. Hovering or tapping shows 😴 and the tooltip "Booo, set a team name". It disappears on its own once they set one.
-- A note under the table explains the calculated columns.
+- **Footnotes:** the calculated columns (M/E #, Bench pts, Pts left on bench, Luck) have small superscript numbers that match a numbered list of explanations under the table, below the key for the playoff marks. To change the season-long setting for M/E #, edit `showME` in `app.js`.
 
 **By week:** a bump chart of every team's standings position after each regular-season week.
 - One coloured line per team, with the dashed playoff line. Each team's current record is shown next to its name on the right.
