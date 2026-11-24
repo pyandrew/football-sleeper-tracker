@@ -125,7 +125,7 @@ Do these each year, once the commissioner renews the league on Sleeper for the n
 - [ ] **New league ID:** copy it from the new league's Sleeper URL into `leagueId` in `config.js`. Sleeper links each new league back to the previous one (`previous_league_id`), but not forwards, so the site keeps showing last season's league until this is changed.
 - [ ] **Seasons shown:** move `keeperSeasons` (the next 4 seasons) and `pickSeasons` (the next 2 drafts) in `config.js` forward one year. This step goes away once the one-time setup below works them out from the league's season.
 - [ ] **Check by hand:** compare a few keeper costs (a player on his 2nd+ keep, a new draft pick and an undrafted pickup) against the league rules before telling the league.
-- [ ] **Bump the cache version** (`?v=`) on the two script tags in `index.html`.
+- [ ] **Bump the cache version:** raise the `?v=` number on the two script tags in `index.html`. Changing the league ID edits `config.js`, so without a bump some browsers would keep showing last season.
 
 ### One-time setup (before the first season with returning keepers)
 Build these once so they work for every season after:
@@ -135,9 +135,3 @@ Build these once so they work for every season after:
 - [ ] **Automatic seasons:** work out `keeperSeasons` and `pickSeasons` from the league's current season instead of hard-coding them.
 - [ ] **Max-keeps limit:** once a player has used all 4 keeps (counted across seasons), show "—" for every future year.
 - [ ] **Speed check:** history loads add a few requests per past season. If the page gets slow after many seasons, save past seasons' keeper history in the browser, like the player list, since it never changes.
-
-## Ideas for later
-
-- **Playoff odds:** simulate the rest of the regular season thousands of times, from each team's scoring average and how much it swings, and show each team's chance of a top-4 finish. Sleeper doesn't calculate this.
-- **"Caved" call-out:** a badge for whoever finally sets a real team name.
-- **Keeper cell tooltips:** e.g. "2nd keep: costs a 6th-round pick", if the small keep numbers confuse anyone next season.
