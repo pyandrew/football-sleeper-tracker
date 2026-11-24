@@ -306,7 +306,7 @@
         <h2>${esc(t.person)} <span class="sub">${esc(t.team)} · ${t.w}-${t.l}${t.t ? "-" + t.t : ""} · @${esc(t.user)}</span></h2>
         <div class="scroll"><table>
           <thead><tr><th>Player</th><th>Pos</th><th>How acquired</th><th class="num">Drafted</th>${C.keeperSeasons.map((s, i) => `<th class="num">${s}</th>`).join("")}</tr></thead>
-          <tbody>${t.rows.map((r) => `<tr><td>${esc(r.name)}${r.team && r.pos !== "DEF" ? `<span class="nfl">${esc(r.team)}</span>` : ""}${r.ir ? ' <span class="tag">IR</span>' : ""}</td><td><span class="pos pos-${esc(r.pos)}">${esc(r.pos)}</span></td><td>${esc(r.how)}</td><td class="num">${r.rd === "FA" ? "Undrafted" : `${ordinal(r.rd)}<span class="keep-n">${esc(m.draftYear)}</span>`}</td>${r.costs.map((c, i) => costCell(c, i, r)).join("")}</tr>`).join("")}</tbody>
+          <tbody>${t.rows.map((r) => `<tr><td>${esc(r.name)}${r.team && r.pos !== "DEF" ? `<span class="nfl">${esc(r.team)}</span>` : ""}${r.ir ? ' <span class="tag">IR</span>' : ""}</td><td><span class="pos pos-${esc(r.pos)}">${esc(r.pos)}</span></td><td>${esc(r.how)}</td><td class="num">${r.rd === "FA" ? `Undrafted<span class="keep-n">${esc(m.season)}</span>` : `${ordinal(r.rd)}<span class="keep-n">${esc(m.draftYear)}</span>`}</td>${r.costs.map((c, i) => costCell(c, i, r)).join("")}</tr>`).join("")}</tbody>
         </table></div>
         ${posSummary(t.rows)}
         <h3>Draft pick trades</h3>
