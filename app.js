@@ -242,7 +242,9 @@
     sec.querySelectorAll("svg.bump .team-line").forEach((g) => {
       g.addEventListener("mouseenter", () => {
         const recs = g.dataset.rec.split(",");
-        g.querySelectorAll("circle").forEach((dot, k) => {
+        const dots = g.querySelectorAll("circle");
+        dots.forEach((dot, k) => {
+          if (k === dots.length - 1) return; // the name label already shows the latest record
           const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
           t.setAttribute("x", dot.getAttribute("cx"));
           t.setAttribute("y", Number(dot.getAttribute("cy")) - 8);

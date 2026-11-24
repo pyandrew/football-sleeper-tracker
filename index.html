@@ -71,7 +71,7 @@
   svg.bump .cutline { stroke:var(--accent); stroke-dasharray:4 4; opacity:.6; }
   svg.bump polyline { fill:none; stroke-width:2.5; }
   svg.bump .team-line text { font-size:12px; }
-  svg.bump .wk-rec { font-size:10.5px; font-weight:700; pointer-events:none; stroke:none; }
+  svg.bump .wk-rec { font-size:10.5px; font-weight:700; pointer-events:none; paint-order:stroke; stroke:var(--card); stroke-width:4px; stroke-linejoin:round; }
   svg.bump .team-line { transition:opacity .15s; }
   svg.bump:hover .team-line { opacity:.15; }
   svg.bump .team-line:hover { opacity:1; }
