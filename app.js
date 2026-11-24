@@ -119,7 +119,7 @@
 
     // Week-by-week: running record for the rank chart, plus PA / high / low.
     const run = Object.fromEntries(teams.map((t) => [t.id, { id: t.id, w: 0, t: 0, pf: 0 }]));
-    const stat = Object.fromEntries(teams.map((t) => [t.id, { pa: 0, hi: null, lo: null, g: 0, expW: 0, bench: 0, left: 0, ranks: [] }]));
+    const stat = Object.fromEntries(teams.map((t) => [t.id, { pa: 0, hi: null, lo: null, g: 0, expW: 0, bench: 0, left: 0, ranks: [], results: [] }]));
     // Best possible lineup for a week, from the league's starting slots.
     const SLOT_OK = { QB: ["QB"], RB: ["RB"], WR: ["WR"], TE: ["TE"], K: ["K"], DEF: ["DEF"], FLEX: ["RB", "WR", "TE"], WRRB_FLEX: ["RB", "WR"], REC_FLEX: ["WR", "TE"], SUPER_FLEX: ["QB", "RB", "WR", "TE"] };
     const startSlots = (d.league.roster_positions || []).filter((x) => SLOT_OK[x]).sort((a, b) => SLOT_OK[a].length - SLOT_OK[b].length);
@@ -134,7 +134,7 @@
       }
       return total;
     };
-    for (const week of d.matchups) {
+    for (const [wi, week] of d.matchups.entries()) {
       const games = {};
       for (const m of week) if (m.matchup_id != null) (games[m.matchup_id] = games[m.matchup_id] || []).push(m);
       for (const [a, b] of Object.values(games)) {
@@ -145,6 +145,7 @@
           st.hi = st.hi == null ? pts : Math.max(st.hi, pts);
           st.lo = st.lo == null ? pts : Math.min(st.lo, pts);
           if (pts > opp) r.w += 1; else if (pts === opp) r.t += 1;
+          st.results[wi] = { d: pts - opp, opp: rid2person[y.roster_id] };
         }
       }
       for (const x of week) {
@@ -207,6 +208,27 @@
     return `<svg class="bump" viewBox="0 0 680 330" role="img" aria-label="Standings position after each week">${g}${lines}</svg>`;
   }
 
+  // Week-by-week W/L grid, shaded by margin (full colour at 60+ points).
+  const shade = (a, b, t) => "#" + [1, 3, 5].map((i) => Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, "0")).join("");
+  function resultsGrid(m) {
+    const head = `<tr><th></th>${Array.from({ length: m.weeks }, (_, i) => `<th>Wk ${i + 1}</th>`).join("")}<th></th></tr>`;
+    const rows = m.teams.map((t) => {
+      const cells = Array.from({ length: m.weeks }, (_, k) => {
+        const r = t.results[k];
+        if (!r) return `<td class="res-cell res-none"></td>`;
+        const k2 = Math.min(Math.abs(r.d) / 60, 1);
+        const tie = r.d === 0, won = r.d > 0;
+        const bg = tie ? "#3a3a40" : won ? shade("#14532d", "#22c55e", k2) : shade("#7f1d1d", "#ef4444", k2);
+        const fg = Math.abs(r.d) > 30 ? "#0b1a10" : "#ececee";
+        const tip = `${t.person}, week ${k + 1}: ${tie ? "tied" : won ? "beat" : "lost to"} ${r.opp}${tie ? "" : ` by ${Math.abs(r.d).toFixed(1)}`}`;
+        return `<td class="res-cell" style="background:${bg};color:${fg}" data-tip="${esc(tip)}" title="${esc(tip)}">${tie ? "T" : won ? "W" : "L"}</td>`;
+      }).join("");
+      return `<tr><td class="res-name">${esc(t.person)}</td>${cells}<td class="res-rec">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td></tr>`;
+    }).join("");
+    return `<div class="scroll"><table class="results">${head}${rows}</table></div><p class="note res-tip">Hover a square for the opponent and margin.</p>
+      <div class="res-legend"><span><i style="background:#14532d"></i>Close win</span><span><i style="background:#22c55e"></i>Blowout win</span><span><i style="background:#7f1d1d"></i>Close loss</span><span><i style="background:#ef4444"></i>Blowout loss</span></div>`;
+  }
+
   function wireStandingsToggle() {
     const sec = document.getElementById("standings");
     if (!sec) return;
@@ -214,6 +236,11 @@
       sec.querySelectorAll(".seg button").forEach((b) => b.classList.toggle("on", b === btn));
       sec.querySelectorAll("[data-pane]").forEach((p) => { p.hidden = p.dataset.pane !== btn.dataset.view; });
     }));
+    const tip = sec.querySelector(".res-tip"), def = tip && tip.textContent;
+    sec.querySelectorAll(".res-cell[data-tip]").forEach((c) => {
+      c.addEventListener("mouseenter", () => { tip.textContent = c.dataset.tip; });
+      c.addEventListener("mouseleave", () => { tip.textContent = def; });
+    });
   }
 
   function render(m) {
@@ -253,10 +280,11 @@
     app.innerHTML = `
       <nav class="teams"><div class="nav-row">${nav}<span class="sep sep-main" aria-hidden="true"></span><a class="info" href="#rules">Keeper rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="rules.html">Full league rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="https://ordinarygentlemen.pages.dev/">League history</a></div></nav>
       <section id="standings">
-        <div class="sec-head"><h2>Standings</h2>${bump ? `<div class="seg" role="tablist"><button type="button" class="on" data-view="table">Table</button><button type="button" data-view="chart">By week</button></div>` : ""}</div>
+        <div class="sec-head"><h2>Standings</h2>${bump ? `<div class="seg" role="tablist"><button type="button" class="on" data-view="table">Table</button><button type="button" data-view="chart">By week</button><button type="button" data-view="results">Results</button></div>` : ""}</div>
         <div data-pane="table"><div class="scroll"><table><thead><tr><th class="num">#</th><th>Manager</th><th>Team</th><th class="num">Record</th><th class="num">Diff</th><th class="num">Avg (low–high)</th><th class="num">Bench pts</th><th class="num">Pts left on bench</th><th class="num">Luck</th></tr></thead><tbody>${standings}</tbody></table></div>
         <p class="note">Bench pts = total points scored by players on the bench. Pts left on bench = extra points your best possible lineup would have scored. Luck = actual wins minus expected wins. Expected wins are based on how many teams your score would have beaten each week. Positive means your record is better than your scoring; negative means worse.</p></div>
         ${bump ? `<div data-pane="chart" hidden>${bump}<p class="note">Rank after each week, by record then points for. Hover a line to highlight it.</p></div>` : ""}
+        ${bump ? `<div data-pane="results" hidden>${resultsGrid(m)}</div>` : ""}
       </section>
       <section><h2>Recent moves</h2><ul class="moves">${recent || "<li class='muted'>No moves yet.</li>"}</ul></section>
       ${teamSections}
