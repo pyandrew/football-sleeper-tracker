@@ -68,6 +68,12 @@
   .mk { display:inline-block; min-width:14px; margin-right:4px; font-size:12px; font-weight:700; font-style:normal; }
   .mk-e { color:#f87171; } .mk-x { color:#4ade80; } .mk-s { color:#feae58; }
   .mk-legend { display:flex; flex-wrap:wrap; gap:16px; }
+  sup.fn { font-size:9px; color:var(--accent); margin-left:1px; }
+  .me-m { font-weight:700; color:#4ade80; } .me-e { font-weight:700; color:#feae58; } .me-x { font-weight:700; color:#f87171; }
+  ol.footnotes { margin:6px 0 0; padding-left:20px; color:var(--muted); font-size:12px; }
+  ol.footnotes li { margin:2px 0; }
+  ol.footnotes li::marker { color:var(--accent); font-weight:700; }
+  ol.footnotes b { color:var(--ink); font-weight:600; }
   .note { color:var(--muted); font-size:12px; margin:8px 0 0; }
   svg.bump { width:100%; height:auto; display:block; }
   svg.bump .grid { stroke:var(--line); }
@@ -114,7 +120,7 @@
     table.standings .c-mgr { position:sticky; left:30px; z-index:1; background:var(--card); box-shadow:1px 0 0 var(--line); }
     table.standings th.c-rank, table.standings th.c-mgr { background:var(--head); }
     table.standings th.c-rank { box-shadow:-3px 0 0 var(--head); }
-    .note .bench-note { display:none; }
+    .bench-note { display:none; }
     section.team table:not(.picks) th:first-child, section.team table:not(.picks) td:first-child { position:sticky; left:0; z-index:1; background:var(--card); box-shadow:-3px 0 0 var(--card), 1px 0 0 var(--line); }
     section.team table:not(.picks) th:first-child { background:var(--head); box-shadow:-3px 0 0 var(--head), 1px 0 0 var(--line); }
     .keep-n { display:none; }
@@ -129,8 +135,8 @@
 </header>
 <main id="app"></main>
 <footer>Data comes live from Sleeper each time the page loads. Keeper costs follow the league rules in config.js.</footer>
-<script src="config.js?v=33"></script>
-<script src="app.js?v=33"></script>
+<script src="config.js?v=34"></script>
+<script src="app.js?v=34"></script>
 <button id="to-top" type="button" aria-label="Back to top" title="Back to top">&uarr; Back to top</button>
 <script>
   (function () {

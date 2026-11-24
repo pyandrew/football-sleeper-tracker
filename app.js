@@ -197,7 +197,17 @@
       const surelyAhead = others.filter((o) => o.curW > t.maxW).length;
       t.mark = canCatch === 0 ? "*" : canCatch < playoffTeams ? "X" : surelyAhead >= playoffTeams ? "E" : "";
     });
-    return { teams, recent, season: d.league.season, leagueName: d.league.name, draftYear: d.draftYear, weeks: d.matchups.length, playoffTeams };
+    // Baseball-style magic / elimination numbers, shown from the halfway point of the regular season.
+    // Magic (in a playoff spot): games + 1 - your wins - losses of the first team out.
+    // Elim (outside): games + 1 - wins of the last team in - your losses.
+    const showME = left > 0 && d.matchups.length >= Math.ceil(regWeeks / 2) && teams.length > playoffTeams;
+    if (showME) {
+      const lastIn = teams[playoffTeams - 1], firstOut = teams[playoffTeams];
+      teams.forEach((t, i) => {
+        t.me = i < playoffTeams ? { kind: "magic", n: regWeeks + 1 - t.w - firstOut.l } : { kind: "elim", n: regWeeks + 1 - lastIn.w - t.l };
+      });
+    }
+    return { teams, recent, season: d.league.season, leagueName: d.league.name, draftYear: d.draftYear, weeks: d.matchups.length, playoffTeams, showME };
   }
 
   const LINE_COLOURS = ["#59a7ff", "#20ceb8", "#feae58", "#c96cff", "#fc2b6d", "#8bd450", "#f5d547", "#ff8a5b", "#7aa2c9", "#e58bd3", "#b0b0b8", "#5fd0e8"];
@@ -303,7 +313,7 @@
     const played = m.teams.filter((t) => t.g);
     const benchVals = played.map((t) => t.bench), leftVals = played.map((t) => t.left);
     const withRank = (v, vals, hi) => { const r = rankOf(vals, v, hi); return `${f1(v)}<span class="rk${r === 1 ? " top" : ""}">${ordinal(r)}</span>`; };
-    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num c-rank">${i + 1}</td><td class="c-mgr"><span class="mk mk-${{ "*": "s", X: "x", E: "e" }[t.mark] || "n"}">${t.mark}</span><a href="#team-${t.id}">${esc(t.person)}</a></td><td class="c-team">${t.noName ? `<span class="noname" tabindex="0" title="Booo, set a team name">${esc(t.team)}</span>` : esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${t.g ? `${f1(t.pf / t.g)}<span class="range">${f1(t.lo)}–${f1(t.hi)}</span>` : "—"}</td><td class="num c-bench">${t.g ? withRank(t.bench, benchVals, true) : "—"}</td><td class="num c-left">${t.g ? withRank(t.left, leftVals, false) : "—"}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
+    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num c-rank">${i + 1}</td><td class="c-mgr"><span class="mk mk-${{ "*": "s", X: "x", E: "e" }[t.mark] || "n"}">${t.mark}</span><a href="#team-${t.id}">${esc(t.person)}</a></td><td class="c-team">${t.noName ? `<span class="noname" tabindex="0" title="Booo, set a team name">${esc(t.team)}</span>` : esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td>${m.showME ? `<td class="num">${t.me.kind === "magic" ? `<span class="me-m">${t.me.n <= 0 ? "X" : t.me.n}</span>` : `<span class="${t.me.n <= 0 ? "me-x" : "me-e"}">${t.me.n <= 0 ? "E" : t.me.n}</span>`}</td>` : ""}<td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${t.g ? `${f1(t.pf / t.g)}<span class="range">${f1(t.lo)}–${f1(t.hi)}</span>` : "—"}</td><td class="num c-bench">${t.g ? withRank(t.bench, benchVals, true) : "—"}</td><td class="num c-left">${t.g ? withRank(t.left, leftVals, false) : "—"}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
     const bump = rankChart(m);
     const POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DEF"];
     const posSummary = (rows) => {
@@ -331,9 +341,14 @@
       <nav class="teams"><div class="nav-row">${nav}<span class="sep sep-main" aria-hidden="true"></span><a class="info" href="#rules">Keeper rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="rules.html">Full league rules</a><span class="sep" aria-hidden="true"></span><a class="info" href="https://ordinarygentlemen.pages.dev/">League history</a></div></nav>
       <section id="standings">
         <div class="sec-head"><h2>Standings</h2>${bump ? `<div class="seg" role="tablist"><button type="button" class="on" data-view="table">Table</button><button type="button" data-view="chart">By week</button><button type="button" data-view="results">Results</button></div>` : ""}</div>
-        <div data-pane="table"><div class="scroll"><table class="standings"><thead><tr><th class="num c-rank">#</th><th class="c-mgr">Manager</th><th class="c-team">Team</th><th class="num">Record</th><th class="num">Diff</th><th class="num">Avg (low–high)</th><th class="num c-bench">Bench pts</th><th class="num c-left">Pts left on bench</th><th class="num">Luck</th></tr></thead><tbody>${standings}</tbody></table></div>
+        <div data-pane="table"><div class="scroll"><table class="standings"><thead><tr><th class="num c-rank">#</th><th class="c-mgr">Manager</th><th class="c-team">Team</th><th class="num">Record</th>${m.showME ? '<th class="num" title="Magic / elimination number">M/E #<sup class="fn">1</sup></th>' : ""}<th class="num">Diff</th><th class="num">Avg (low–high)</th><th class="num c-bench">Bench pts<sup class="fn">2</sup></th><th class="num c-left">Pts left on bench<sup class="fn">3</sup></th><th class="num">Luck<sup class="fn">4</sup></th></tr></thead><tbody>${standings}</tbody></table></div>
         <p class="note mk-legend"><span><b class="mk mk-s">*</b>Clinched top seed</span><span><b class="mk mk-x">X</b>Clinched playoff spot</span><span><b class="mk mk-e">E</b>Eliminated</span></p>
-        <p class="note"><span class="bench-note">Bench pts = total points scored by players on the bench. Pts left on bench = extra points your best possible lineup would have scored. </span>Luck = actual wins minus expected wins. Expected wins are based on how many teams your score would have beaten each week. Positive means your record is better than your scoring; negative means worse.</p></div>
+        <ol class="footnotes">
+          ${m.showME ? `<li value="1"><b>M/E #:</b> green = your wins (or losses by the first team out) until you clinch; orange = your losses (or wins by the ${ordinal(m.playoffTeams)}-place team) until you're out. Both teams' results count, so it can be higher than your games left.</li>` : ""}
+          <li value="2" class="bench-note"><b>Bench pts:</b> total points scored by players on the bench.</li>
+          <li value="3" class="bench-note"><b>Pts left on bench:</b> extra points your best possible lineup would have scored.</li>
+          <li value="4"><b>Luck:</b> actual wins minus expected wins, based on how many teams your score would have beaten each week. Positive = record better than your scoring.</li>
+        </ol></div>
         ${bump ? `<div data-pane="chart" hidden>${bump}<p class="note">Rank after each week, by record then points for. Hover or tap a line to see that team's record each week.</p></div>` : ""}
         ${bump ? `<div data-pane="results" hidden>${resultsGrid(m)}</div>` : ""}
       </section>
