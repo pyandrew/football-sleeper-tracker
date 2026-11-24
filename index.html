@@ -54,6 +54,8 @@
   .noname::after { content:"\1F634"; display:inline-block; margin-left:5px; opacity:0; transition:opacity .15s; }
   .noname:hover::after { opacity:1; }
   .range { color:var(--muted); font-size:12px; margin-left:6px; }
+  .rk { color:var(--muted); font-size:11px; margin-left:5px; display:inline-block; min-width:24px; text-align:left; }
+  .rk.top { color:#feae58; }
   .note { color:var(--muted); font-size:12px; margin:8px 0 0; }
   svg.bump { width:100%; height:auto; display:block; }
   svg.bump .grid { stroke:var(--line); }
@@ -85,8 +87,8 @@
 </header>
 <main id="app"></main>
 <footer>Data comes live from Sleeper each time the page loads. Keeper costs follow the league rules in config.js.</footer>
-<script src="config.js?v=24"></script>
-<script src="app.js?v=24"></script>
+<script src="config.js?v=25"></script>
+<script src="app.js?v=25"></script>
 <button id="to-top" type="button" aria-label="Back to top" title="Back to top">&uarr; Back to top</button>
 <script>
   (function () {

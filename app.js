@@ -221,7 +221,12 @@
     const nav = m.teams.map((t) => `<a href="#team-${t.id}">${esc(t.person)}</a>`).join("");
     const f1 = (n) => (n == null ? "—" : n.toFixed(1));
     const signed = (n) => (n == null ? "—" : `<span class="${n > 0.05 ? "up" : n < -0.05 ? "down" : ""}">${n > 0.05 ? "+" : ""}${n.toFixed(1)}</span>`);
-    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${t.noName ? `<span class="noname" title="Booo, set a team name">${esc(t.team)}</span>` : esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${t.g ? `${f1(t.pf / t.g)}<span class="range">${f1(t.lo)}–${f1(t.hi)}</span>` : "—"}</td><td class="num">${f1(t.g ? t.bench : null)}</td><td class="num">${f1(t.g ? t.left : null)}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
+    // Rank labels: bench pts high-to-low, pts left on bench low-to-high (1st = best lineup calls).
+    const rankOf = (vals, v, higherIsBetter) => 1 + vals.filter((x) => (higherIsBetter ? x > v : x < v)).length;
+    const played = m.teams.filter((t) => t.g);
+    const benchVals = played.map((t) => t.bench), leftVals = played.map((t) => t.left);
+    const withRank = (v, vals, hi) => { const r = rankOf(vals, v, hi); return `${f1(v)}<span class="rk${r === 1 ? " top" : ""}">${ordinal(r)}</span>`; };
+    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num">${i + 1}</td><td><a href="#team-${t.id}">${esc(t.person)}</a></td><td>${t.noName ? `<span class="noname" title="Booo, set a team name">${esc(t.team)}</span>` : esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${t.g ? `${f1(t.pf / t.g)}<span class="range">${f1(t.lo)}–${f1(t.hi)}</span>` : "—"}</td><td class="num">${t.g ? withRank(t.bench, benchVals, true) : "—"}</td><td class="num">${t.g ? withRank(t.left, leftVals, false) : "—"}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
     const bump = rankChart(m);
     const POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DEF"];
     const posSummary = (rows) => {
