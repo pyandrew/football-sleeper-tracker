@@ -58,7 +58,7 @@ Three views, switched with the **Table / By week / Results** buttons.
 The 25 latest trades, waiver claims and free-agent pickups, newest first, showing who got which players and picks and who was dropped.
 
 ### Team sections
-One section per team, with the manager, team name, record and Sleeper username.
+One section per team, with the manager, team name, record and Sleeper username. The years in the examples below are from the 2026 season; all of them roll forward each season.
 
 **Roster table:** every rostered player, defenses included.
 
@@ -117,16 +117,24 @@ The offsets, the undrafted round and the seasons shown are all in `config.js`.
 
 ---
 
-## Next season checklist (2027)
+## New season checklist
 
-Do these once the commissioner renews the league on Sleeper for 2027:
+Do these each year, once the commissioner renews the league on Sleeper for the new season.
 
-- [ ] **New league ID:** copy it from the new league's Sleeper URL into `leagueId` in `config.js`. Sleeper links the new league back to this one (`previous_league_id`), but not forwards, so the site keeps showing the 2026 league until this is changed.
-- [ ] **Keeper years:** move `keeperSeasons` in `config.js` forward a year (2028–2031) and `pickSeasons` to 2028–2029.
-- [ ] **Past keepers:** connect last season's keepers so each player's keep number and cost are right. Read the previous league's draft (`previous_league_id`) for picks marked as keepers, and set `priorKeeps` on each roster row in `app.js`. Until this is done, a player on his 2nd keep shows and is costed as a 1st keep, which makes it too cheap.
-- [ ] **Undrafted pickup year:** players picked up undrafted in 2026 and kept should still show 2026 in the Drafted column, not the new season. Use the earliest pickup found across past seasons.
-- [ ] **Check by hand:** compare a few keeper costs (one kept player, one new draft pick, one undrafted pickup) against the league rules before telling the league.
+### Every season
+- [ ] **New league ID:** copy it from the new league's Sleeper URL into `leagueId` in `config.js`. Sleeper links each new league back to the previous one (`previous_league_id`), but not forwards, so the site keeps showing last season's league until this is changed.
+- [ ] **Seasons shown:** move `keeperSeasons` (the next 4 seasons) and `pickSeasons` (the next 2 drafts) in `config.js` forward one year. This step goes away once the one-time setup below works them out from the league's season.
+- [ ] **Check by hand:** compare a few keeper costs (a player on his 2nd+ keep, a new draft pick and an undrafted pickup) against the league rules before telling the league.
 - [ ] **Bump the cache version** (`?v=`) on the two script tags in `index.html`.
+
+### One-time setup (before the first season with returning keepers)
+Build these once so they work for every season after:
+
+- [ ] **Keeper history across seasons:** walk the chain of `previous_league_id` links back through every past season. Count each player's keeps from the picks marked as keepers in each season's draft, and set `priorKeeps` on each roster row in `app.js`. Until this is done, a player on a repeat keep shows and is costed as a 1st keep, which makes it too cheap.
+- [ ] **Original acquisition year:** use the season a player was first drafted, or first picked up if undrafted, found across all past seasons. This keeps the year in the Drafted column and the keeper cost tied to his original round and year, not the current season.
+- [ ] **Automatic seasons:** work out `keeperSeasons` and `pickSeasons` from the league's current season instead of hard-coding them.
+- [ ] **Max-keeps limit:** once a player has used all 4 keeps (counted across seasons), show "—" for every future year.
+- [ ] **Speed check:** history loads add a few requests per past season. If the page gets slow after many seasons, save past seasons' keeper history in the browser, like the player list, since it never changes.
 
 ## Ideas for later
 
