@@ -32,6 +32,8 @@ Three views, switched with the **Table / By week / Results** buttons.
 
 **Table:** one row per team, ranked by record, then points for. A dashed line under 4th place marks the playoff cut.
 
+- **Playoff marks:** shown before the manager's name and updated each week: **\*** clinched the top seed, **X** clinched a playoff spot, **E** eliminated. A tie in wins counts as a threat, since points for decides it and can still change, so a mark only appears once it's certain. A legend sits under the table.
+
 | Column | What it shows |
 |---|---|
 | # / Manager / Team | Rank, manager's first name (links to their roster), and Sleeper team name |
