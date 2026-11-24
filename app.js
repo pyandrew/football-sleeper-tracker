@@ -185,6 +185,18 @@
     });
 
     const playoffTeams = (d.league.settings && d.league.settings.playoff_teams) || 4;
+    // Clinch / elimination marks. A tie in wins counts as a threat (points for decides it and can still change),
+    // so a team is only marked once it's certain.
+    const ls = d.league.settings || {};
+    const regWeeks = (ls.playoff_week_start || 99) - 1;
+    const left = Math.max(0, Math.min(regWeeks, 18) - d.matchups.length);
+    teams.forEach((t) => { t.curW = t.w + t.t / 2; t.maxW = t.curW + left; });
+    teams.forEach((t) => {
+      const others = teams.filter((o) => o !== t);
+      const canCatch = others.filter((o) => o.maxW >= t.curW).length;
+      const surelyAhead = others.filter((o) => o.curW > t.maxW).length;
+      t.mark = canCatch === 0 ? "*" : canCatch < playoffTeams ? "X" : surelyAhead >= playoffTeams ? "E" : "";
+    });
     return { teams, recent, season: d.league.season, leagueName: d.league.name, draftYear: d.draftYear, weeks: d.matchups.length, playoffTeams };
   }
 
@@ -291,7 +303,7 @@
     const played = m.teams.filter((t) => t.g);
     const benchVals = played.map((t) => t.bench), leftVals = played.map((t) => t.left);
     const withRank = (v, vals, hi) => { const r = rankOf(vals, v, hi); return `${f1(v)}<span class="rk${r === 1 ? " top" : ""}">${ordinal(r)}</span>`; };
-    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num c-rank">${i + 1}</td><td class="c-mgr"><a href="#team-${t.id}">${esc(t.person)}</a></td><td class="c-team">${t.noName ? `<span class="noname" tabindex="0" title="Booo, set a team name">${esc(t.team)}</span>` : esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${t.g ? `${f1(t.pf / t.g)}<span class="range">${f1(t.lo)}–${f1(t.hi)}</span>` : "—"}</td><td class="num c-bench">${t.g ? withRank(t.bench, benchVals, true) : "—"}</td><td class="num c-left">${t.g ? withRank(t.left, leftVals, false) : "—"}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
+    const standings = m.teams.map((t, i) => `<tr${i === m.playoffTeams - 1 ? ' class="cut"' : ""}><td class="num c-rank">${i + 1}</td><td class="c-mgr"><span class="mk mk-${{ "*": "s", X: "x", E: "e" }[t.mark] || "n"}">${t.mark}</span><a href="#team-${t.id}">${esc(t.person)}</a></td><td class="c-team">${t.noName ? `<span class="noname" tabindex="0" title="Booo, set a team name">${esc(t.team)}</span>` : esc(t.team)}</td><td class="num">${t.w}-${t.l}${t.t ? "-" + t.t : ""}</td><td class="num">${signed(t.g ? t.pf - t.pa : null)}</td><td class="num">${t.g ? `${f1(t.pf / t.g)}<span class="range">${f1(t.lo)}–${f1(t.hi)}</span>` : "—"}</td><td class="num c-bench">${t.g ? withRank(t.bench, benchVals, true) : "—"}</td><td class="num c-left">${t.g ? withRank(t.left, leftVals, false) : "—"}</td><td class="num">${signed(t.g ? t.w + t.t / 2 - t.expW : null)}</td></tr>`).join("");
     const bump = rankChart(m);
     const POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DEF"];
     const posSummary = (rows) => {
@@ -320,6 +332,7 @@
       <section id="standings">
         <div class="sec-head"><h2>Standings</h2>${bump ? `<div class="seg" role="tablist"><button type="button" class="on" data-view="table">Table</button><button type="button" data-view="chart">By week</button><button type="button" data-view="results">Results</button></div>` : ""}</div>
         <div data-pane="table"><div class="scroll"><table class="standings"><thead><tr><th class="num c-rank">#</th><th class="c-mgr">Manager</th><th class="c-team">Team</th><th class="num">Record</th><th class="num">Diff</th><th class="num">Avg (low–high)</th><th class="num c-bench">Bench pts</th><th class="num c-left">Pts left on bench</th><th class="num">Luck</th></tr></thead><tbody>${standings}</tbody></table></div>
+        <p class="note mk-legend"><span><b class="mk mk-s">*</b>Clinched top seed</span><span><b class="mk mk-x">X</b>Clinched playoff spot</span><span><b class="mk mk-e">E</b>Eliminated</span></p>
         <p class="note"><span class="bench-note">Bench pts = total points scored by players on the bench. Pts left on bench = extra points your best possible lineup would have scored. </span>Luck = actual wins minus expected wins. Expected wins are based on how many teams your score would have beaten each week. Positive means your record is better than your scoring; negative means worse.</p></div>
         ${bump ? `<div data-pane="chart" hidden>${bump}<p class="note">Rank after each week, by record then points for. Hover or tap a line to see that team's record each week.</p></div>` : ""}
         ${bump ? `<div data-pane="results" hidden>${resultsGrid(m)}</div>` : ""}
